@@ -1,22 +1,52 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --primary: #58cc02; /* Duolingo Green */
-  --primary-dark: #46a302;
-  --secondary: #ce82ff; /* Fun Purple */
+  --foreground: #3c3c3c;
+  
+  /* Brand Colors */
+  --green-primary: #58cc02;
+  --green-shadow: #58a700;
+  --blue-primary: #1cb0f6;
+  --blue-shadow: #1899d6;
+  --red-primary: #ff4b4b;
+  --red-shadow: #ea2b2b;
+  --yellow-primary: #ffc800;
+  --yellow-shadow: #e5a400;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4; 
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  max-width: 450px; /* Mobile width constraint for desktop view */
-  margin: 0 auto;
-  border-left: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
-  min-height: 100vh;
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), sans-serif;
+  }
+}
+
+@layer components {
+  /* The "Juicy" 3D Button Class */
+  .btn-primary {
+    @apply bg-[var(--green-primary)] text-white font-bold py-3 px-6 rounded-2xl border-b-4 border-[var(--green-shadow)] active:border-b-0 active:translate-y-1 transition-all uppercase tracking-widest text-sm w-full flex justify-center items-center;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-[var(--blue-primary)] font-bold py-3 px-6 rounded-2xl border-2 border-[var(--gray-200)] border-b-4 active:border-b-2 active:translate-y-0.5 transition-all uppercase tracking-widest text-sm hover:bg-gray-50;
+  }
+  
+  .btn-danger {
+    @apply bg-[var(--red-primary)] text-white font-bold py-3 px-6 rounded-2xl border-b-4 border-[var(--red-shadow)] active:border-b-0 active:translate-y-1 transition-all uppercase tracking-widest text-sm;
+  }
+  
+  .card-3d {
+    @apply bg-white border-2 border-[var(--gray-200)] rounded-3xl shadow-sm;
+  }
 }
