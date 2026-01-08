@@ -177,7 +177,8 @@ export default function LessonClient({ lesson }: { lesson: Lesson }) {
             )
           })}
         </div>
-      </main>
+      </div>
+    </main>
 
       {/* Footer / Check Button */}
       <footer className="fixed bottom-0 w-full max-w-lg p-6 border-t-2 border-gray-100 bg-white z-10">
