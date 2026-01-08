@@ -11,28 +11,82 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  username  String   @default("Legend")
-  totalXP   Int      @default(0)
-  streak    Int      @default(0)
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  email         String   @unique
+  password      String // Hashed
+  username      String   @default("Student")
+  totalXP       Int      @default(0)
+  streak        Int      @default(0)
   lastStudyDate DateTime?
-  sessions  StudySession[]
+  
+  sessions      StudySession[]
+  progress      LessonProgress[]
 }
 
-model Flashcard {
-  id          String @id @default(cuid())
-  korean      String
-  english     String
-  level       String // "Level 4", "Level 5"
-  mastery     Int    @default(0) // 0 to 5
+// --- Content Structure ---
+
+model TopikLevel {
+  id          String   @id @default(cuid())
+  level       Int      // 3, 4, 5, 6
+  title       String   // "Intermediate", "Advanced"
+  units       Unit[]
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  order       Int
+  title       String   // "Social Issues", "Economy"
+  description String?
+  levelId     String
+  level       TopikLevel @relation(fields: [levelId], references: [id])
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  order       Int
+  title       String   // "Vocab Drill", "Reading Comprehension"
+  type        String   // "VOCAB", "READING", "LISTENING", "WRITING"
+  unitId      String
+  unit        Unit     @relation(fields: [unitId], references: [id])
+  
+  questions   Question[]
+  progress    LessonProgress[]
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  type          String   // "MULTIPLE_CHOICE", "GAP_FILL"
+  content       String   // The question text or passage (Markdown support)
+  options       String[] // For multiple choice
+  correctAnswer String   // The correct answer string or index
+  explanation   String?  // Explanation for why it's correct
+  
+  lessonId      String
+  lesson        Lesson   @relation(fields: [lessonId], references: [id])
+}
+
+// --- User Progress ---
+
+model LessonProgress {
+  id        String   @id @default(cuid())
+  completed Boolean  @default(false)
+  score     Int      @default(0)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, lessonId])
 }
 
 model StudySession {
   id        String   @id @default(cuid())
   date      DateTime @default(now())
   xpEarned  Int
-  type      String   // "READING", "WRITING", "VOCAB"
+  type      String   
   userId    String
   user      User     @relation(fields: [userId], references: [id])
 }

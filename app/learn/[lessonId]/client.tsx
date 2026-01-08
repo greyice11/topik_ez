@@ -1,72 +1,85 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle, XCircle, Flag } from 'lucide-react'
+import { X, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
-import { updateXP } from '@/app/actions'
+import { completeLesson } from '@/app/actions'
 import { Mascot } from '@/components/ui/Mascot'
 import { cn } from '@/lib/utils'
 
-interface Card {
+// Types based on Prisma Schema
+interface Question {
   id: string
-  korean: string
-  english: string
-  level: string
+  type: string
+  content: string
+  options: string[]
+  correctAnswer: string
+  explanation: string | null
 }
 
-export default function VocabClient({ cards }: { cards: Card[] }) {
+interface Lesson {
+  id: string
+  title: string
+  type: string
+  questions: Question[]
+}
+
+export default function LessonClient({ lesson }: { lesson: Lesson }) {
   const [index, setIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle')
   const [hearts, setHearts] = useState(5)
+  const [score, setScore] = useState(0)
+  const [isCompleted, setIsCompleted] = useState(false)
   
-  const currentCard = cards[index % cards.length]
+  const currentQuestion = lesson.questions[index]
 
-  // Generate options (1 correct + 2 random wrong ones)
-  const options = useMemo(() => {
-    if (!cards.length) return []
-    const otherCards = cards.filter(c => c.id !== currentCard.id)
-    const randomWrong = otherCards.sort(() => 0.5 - Math.random()).slice(0, 2)
-    const allOptions = [currentCard, ...randomWrong]
-    return allOptions.sort(() => 0.5 - Math.random()) // Shuffle
-  }, [currentCard, cards])
-
-  // Play sound effect (simulated function)
-  const playSound = (type: 'correct' | 'wrong') => {
-    // In a real app, use Audio API here
-  }
+  // Shuffle options if needed, but for TOPIK reading usually they are fixed order (1,2,3,4)
+  // For Vocab, maybe shuffle. Let's keep DB order for now to be safe.
+  const options = currentQuestion?.options || []
 
   const handleCheck = async () => {
     if (!selectedOption) return
 
-    const isCorrect = selectedOption === currentCard.id
+    const isCorrect = selectedOption === currentQuestion.correctAnswer
     if (isCorrect) {
       setStatus('correct')
-      playSound('correct')
-      await updateXP(10) 
+      setScore(s => s + 10)
     } else {
       setStatus('wrong')
-      playSound('wrong')
       setHearts(h => Math.max(0, h - 1))
     }
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setStatus('idle')
     setSelectedOption(null)
-    setIndex(prev => prev + 1)
+    
+    if (index + 1 >= lesson.questions.length) {
+      await completeLesson(lesson.id, score)
+      setIsCompleted(true)
+    } else {
+      setIndex(prev => prev + 1)
+    }
   }
 
-  if (!cards.length) return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4">
-      <Mascot emotion="sad" />
-      <p className="font-bold text-xl text-gray-500">No cards found!</p>
-      <Link href="/" className="btn-primary w-auto">Go Home</Link>
-    </div>
-  )
+  if (isCompleted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-white text-center">
+        <Mascot emotion="excited" />
+        <h1 className="text-3xl font-extrabold text-yellow-500 mt-6 mb-2">Lesson Complete!</h1>
+        <p className="text-xl font-bold text-gray-400 mb-8">You earned {score + 10} XP</p>
+        <Link href="/" className="btn-primary w-full max-w-xs">
+          CONTINUE
+        </Link>
+      </div>
+    )
+  }
 
-  const progress = ((index % cards.length) / cards.length) * 100
+  if (!currentQuestion) return <div>Loading...</div>
+
+  const progress = ((index) / lesson.questions.length) * 100
 
   return (
     <div className="flex flex-col h-screen max-w-lg mx-auto bg-white overflow-hidden relative">
@@ -89,25 +102,30 @@ export default function VocabClient({ cards }: { cards: Card[] }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col px-6 pb-32 overflow-y-auto">
-        <h2 className="text-2xl font-bold text-gray-700 mb-8">
-          Select the correct meaning
+        <h2 className="text-2xl font-bold text-gray-700 mb-4">
+          {lesson.type === 'READING' ? "Read and answer" : "Select the correct meaning"}
         </h2>
 
-        {/* The Question Card (Mascot + Bubble) */}
-        <div className="flex items-center gap-4 mb-8">
-           <Mascot emotion={status === 'correct' ? 'happy' : status === 'wrong' ? 'sad' : 'happy'} />
-           <div className="relative border-2 border-gray-200 p-4 rounded-2xl pr-8 bubble-left">
-             <span className="text-lg font-bold text-gray-700">{currentCard.korean}</span>
-             <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-l-2 border-b-2 border-gray-200 rotate-45" />
-           </div>
-        </div>
+        {/* Content Area (Passage or Vocab) */}
+        {lesson.type === 'READING' ? (
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 mb-6 text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
+            {currentQuestion.content}
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 mb-8">
+             <Mascot emotion={status === 'correct' ? 'happy' : status === 'wrong' ? 'sad' : 'happy'} />
+             <div className="relative border-2 border-gray-200 p-4 rounded-2xl pr-8 bubble-left">
+               <span className="text-lg font-bold text-gray-700">{currentQuestion.content}</span>
+             </div>
+          </div>
+        )}
 
         {/* Options Grid */}
         <div className="space-y-4">
-          {options.map((opt) => {
-            const isSelected = selectedOption === opt.id
-            const showCorrect = status !== 'idle' && opt.id === currentCard.id
-            const showWrong = status === 'wrong' && isSelected && opt.id !== currentCard.id
+          {options.map((opt, i) => {
+            const isSelected = selectedOption === opt
+            const showCorrect = status !== 'idle' && opt === currentQuestion.correctAnswer
+            const showWrong = status === 'wrong' && isSelected && opt !== currentQuestion.correctAnswer
 
             let borderClass = "border-gray-200 border-b-4 active:border-b-2"
             let bgClass = "bg-white"
@@ -132,16 +150,16 @@ export default function VocabClient({ cards }: { cards: Card[] }) {
 
             return (
               <button
-                key={opt.id}
+                key={i}
                 disabled={status !== 'idle'}
-                onClick={() => setSelectedOption(opt.id)}
+                onClick={() => setSelectedOption(opt)}
                 className={cn(
                   "w-full p-4 rounded-2xl border-2 text-left font-bold text-lg flex justify-between items-center transition-all",
                   borderClass, bgClass, textClass
                 )}
               >
-                <span>{opt.english}</span>
-                {/* Number Key Hint (1, 2, 3) could go here */}
+                <span>{opt}</span>
+                <span className="text-gray-300 text-sm border border-gray-200 rounded px-2">{i + 1}</span>
               </button>
             )
           })}
@@ -187,7 +205,13 @@ export default function VocabClient({ cards }: { cards: Card[] }) {
             
             {status === 'wrong' && (
               <div className="text-red-800 font-bold pl-14 -mt-4 mb-2">
-                Correct answer: {currentCard.english}
+                Correct answer: {currentQuestion.correctAnswer}
+              </div>
+            )}
+            
+            {status === 'correct' && currentQuestion.explanation && (
+              <div className="text-green-800 font-medium pl-14 -mt-4 mb-2 text-sm opacity-80">
+                {currentQuestion.explanation}
               </div>
             )}
 
