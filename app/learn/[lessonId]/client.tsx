@@ -107,22 +107,35 @@ export default function LessonClient({ lesson }: { lesson: Lesson }) {
         </h2>
 
         {/* Content Area (Passage or Vocab) */}
-        {lesson.type === 'READING' ? (
-          <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 mb-6 text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
-            {currentQuestion.content}
-          </div>
-        ) : (
-          <div className="flex items-center gap-4 mb-8">
-             <Mascot emotion={status === 'correct' ? 'happy' : status === 'wrong' ? 'sad' : 'happy'} />
-             <div className="relative border-2 border-gray-200 p-4 rounded-2xl pr-8 bubble-left">
-               <span className="text-lg font-bold text-gray-700">{currentQuestion.content}</span>
-             </div>
-          </div>
-        )}
+        <div className={cn("flex-1", lesson.type === 'READING' ? "lg:flex lg:gap-8 lg:overflow-hidden" : "")}>
+          
+          {/* Left Panel: Reading Passage (IBT Style) */}
+          {lesson.type === 'READING' && (
+            <div className="lg:w-1/2 bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 mb-6 lg:mb-0 text-lg leading-relaxed text-gray-800 whitespace-pre-wrap overflow-y-auto font-serif shadow-inner h-full">
+              {/* Extract just the passage part before "Q." if we combined them */}
+              {currentQuestion.content.split('Q.')[0]}
+            </div>
+          )}
 
-        {/* Options Grid */}
-        <div className="space-y-4">
-          {options.map((opt, i) => {
+          {/* Right Panel: Question & Options */}
+          <div className={cn("flex flex-col", lesson.type === 'READING' ? "lg:w-1/2 lg:overflow-y-auto" : "w-full")}>
+             
+             {/* Question Prompt */}
+             <div className="flex items-start gap-4 mb-8">
+                {lesson.type !== 'READING' && <Mascot emotion={status === 'correct' ? 'happy' : status === 'wrong' ? 'sad' : 'happy'} />}
+                <div className={cn("relative border-2 border-gray-200 p-4 rounded-2xl w-full", lesson.type !== 'READING' && "bubble-left")}>
+                  <span className="text-lg font-bold text-gray-700">
+                    {lesson.type === 'READING' 
+                      ? (currentQuestion.content.includes('Q.') ? `Q. ${currentQuestion.content.split('Q.')[1]}` : "Read the passage and answer.")
+                      : currentQuestion.content
+                    }
+                  </span>
+                </div>
+             </div>
+
+             {/* Options Grid */}
+             <div className="space-y-4 pb-20">
+               {options.map((opt, i) => {
             const isSelected = selectedOption === opt
             const showCorrect = status !== 'idle' && opt === currentQuestion.correctAnswer
             const showWrong = status === 'wrong' && isSelected && opt !== currentQuestion.correctAnswer
