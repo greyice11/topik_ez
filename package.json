@@ -9,6 +9,9 @@
     "lint": "eslint",
     "postinstall": "prisma generate"
   },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "clsx": "^2.1.1",
@@ -28,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
