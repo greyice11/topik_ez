@@ -18,6 +18,7 @@ model User {
   username      String   @default("Student")
   totalXP       Int      @default(0)
   streak        Int      @default(0)
+  gems          Int      @default(0)
   lastStudyDate DateTime?
   
   sessions      StudySession[]

@@ -125,3 +125,16 @@ export async function completeLesson(lessonId: string, score: number) {
 
   revalidatePath("/")
 }
+
+export async function getLeaderboard() {
+  return await prisma.user.findMany({
+    orderBy: { totalXP: 'desc' },
+    take: 10,
+    select: {
+      id: true,
+      username: true,
+      totalXP: true,
+      streak: true
+    }
+  })
+}
