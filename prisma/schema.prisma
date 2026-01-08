@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  username  String   @default("Legend")
+  totalXP   Int      @default(0)
+  streak    Int      @default(0)
+  lastStudyDate DateTime?
+  sessions  StudySession[]
+}
+
+model Flashcard {
+  id          String @id @default(cuid())
+  korean      String
+  english     String
+  level       String // "Level 4", "Level 5"
+  mastery     Int    @default(0) // 0 to 5
+}
+
+model StudySession {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  xpEarned  Int
+  type      String   // "READING", "WRITING", "VOCAB"
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
